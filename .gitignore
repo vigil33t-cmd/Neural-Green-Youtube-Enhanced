@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+
+# Node (на случай если кто-то добавит dev-tooling)
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Builds / временное
+dist/
+build/
+.cache/
+*.log
+
+# Локальные конфиги
+.env
+.env.local
+*.local
+
+# Скриншоты для отладки (не коммитим)
+debug/
+screenshots/*.png
+!screenshots/README.md
