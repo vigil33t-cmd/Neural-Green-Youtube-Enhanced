@@ -1,0 +1,800 @@
+/* ============================================================
+   YOUTUBE — TTY TERMINAL + NEURAL BACKGROUND
+   Плоский фосфорный зелёный. Без неона. Без свечения.
+   Красный YouTube → зелёный. Фон — нейросетка под курсором.
+   v4 — FIX: дублирование бейджа длительности видео.
+   ============================================================ */
+
+/* ============================================================
+   0. ПЕРЕМЕННЫЕ
+   ============================================================ */
+:root {
+    --fg:        #33ff33;
+    --fg-dim:    #22c922;
+    --fg-meta:   #4aff4a;
+    --fg-bright: #a8ffa8;
+    --bg:        #000000;
+    --line:      1px solid var(--fg-dim);
+
+    --font-mono: "JetBrains Mono", "Fira Code", "SF Mono",
+                 "Cascadia Code", "Roboto Mono", Consolas,
+                 "Liberation Mono", Menlo, monospace;
+}
+
+/* ============================================================
+   1. ГЛОБАЛЬНЫЙ СБРОС
+   ============================================================ */
+ytd-app *,
+ytd-app *::before,
+ytd-app *::after {
+    border-radius: 0 !important;
+    font-family: var(--font-mono) !important;
+    font-feature-settings: "liga" 0, "calt" 0 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+button, input, textarea, select, yt-formatted-string,
+#video-title, ytd-video-meta-block, .title, span, div {
+    font-family: var(--font-mono) !important;
+}
+
+ytd-app * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* ============================================================
+   2. ФОН + CANVAS (нейросетка)
+   ============================================================ */
+html {
+    background: #000 !important;
+}
+body {
+    background: transparent !important;
+}
+
+#neural-bg-canvas {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: block !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+ytd-app {
+    position: relative !important;
+    z-index: 1 !important;
+    background: transparent !important;
+    color: var(--fg) !important;
+}
+
+#content,
+#page-manager,
+ytd-browse,
+ytd-watch-flexy,
+ytd-page-manager,
+#columns,
+#primary,
+#secondary,
+ytd-rich-grid-renderer,
+ytd-two-column-browse-results-renderer,
+ytd-section-list-renderer,
+ytd-rich-section-renderer,
+ytd-rich-grid-row {
+    background: transparent !important;
+}
+
+/* ============================================================
+   3. ХЕДЕР
+   ============================================================ */
+ytd-masthead,
+ytd-masthead.shell,
+ytd-masthead.shell.dark,
+#masthead-container {
+    background: #000 !important;
+    border-bottom: var(--line) !important;
+}
+
+#buttons yt-icon-button svg,
+ytd-topbar-menu-button-renderer svg,
+#menu-icon,
+.yt-icons-ext {
+    fill: var(--fg) !important;
+    color: var(--fg) !important;
+}
+
+/* ============================================================
+   4. ЛОГОТИП YOUTUBE — ЗЕЛЁНЫЙ
+   ============================================================ */
+ytd-topbar-logo-renderer svg path,
+ytd-topbar-logo-renderer svg #youtube-paths path,
+ytd-topbar-logo-renderer svg #youtube-red-paths path,
+#logo-icon svg path,
+#logo-icon svg #youtube-paths path,
+#logo-icon svg #youtube-red-paths path,
+svg#yt-ringo2-red-svg path,
+svg#yt-ringo2-svg path {
+    fill: var(--fg) !important;
+}
+ytd-topbar-logo-renderer:hover svg path,
+#logo-icon:hover svg path {
+    fill: var(--fg-bright) !important;
+}
+
+/* ============================================================
+   5. ЗАМЕНА КРАСНОГО — ГЛОБАЛЬНО
+   ============================================================ */
+ytd-app svg [fill="#FF0033"],
+ytd-app svg [fill="#ff0033"],
+ytd-app svg [fill="#F03"],
+ytd-app svg [fill="#f03"],
+ytd-app svg [fill="#FF0000"],
+ytd-app svg [fill="#ff0000"],
+ytd-app svg [fill="#CC0000"],
+ytd-app svg [fill="#cc0000"],
+ytd-app svg [fill="#E53935"],
+ytd-app svg [fill="#e53935"],
+ytd-app svg [fill="#f00"],
+ytd-app svg [fill="#F00"] {
+    fill: var(--fg) !important;
+}
+
+ytd-app [style*="color: rgb(255, 0, 51)"],
+ytd-app [style*="color:#ff0033"],
+ytd-app [style*="color: #ff0033"],
+ytd-app [style*="color:rgb(255,0,51)"],
+ytd-app [style*="color:red"],
+ytd-app [style*="color: red"] {
+    color: var(--fg) !important;
+}
+ytd-app [style*="background-color: rgb(255, 0, 51)"],
+ytd-app [style*="background:#ff0033"],
+ytd-app [style*="background: #ff0033"],
+ytd-app [style*="background-color:#ff0033"],
+ytd-app [style*="background-color: #ff0033"] {
+    background: var(--fg) !important;
+}
+
+/* CSS-переменные YouTube */
+:root,
+html[dark] {
+    --yt-spec-red-indicator:          var(--fg) !important;
+    --yt-spec-brand-red:              var(--fg) !important;
+    --yt-spec-brand-link-text:        var(--fg) !important;
+    --yt-spec-call-to-action:         var(--fg) !important;
+    --yt-spec-error-indicator:        var(--fg) !important;
+    --yt-spec-static-brand-red:       var(--fg) !important;
+    --yt-spec-static-overlay-background-brand: var(--fg) !important;
+
+    --yt-spec-text-primary:           var(--fg) !important;
+    --yt-spec-text-primary-inverse:   #000 !important;
+    --yt-spec-text-secondary:         var(--fg-meta) !important;
+    --yt-spec-text-disabled:          var(--fg-dim) !important;
+
+    --yt-spec-icon-active-other:      var(--fg) !important;
+    --yt-spec-icon-inactive:          var(--fg-meta) !important;
+    --yt-spec-icon-disabled:          var(--fg-dim) !important;
+
+    --yt-spec-static-brand-white:     var(--fg-bright) !important;
+    --yt-sys-color-error:             var(--fg) !important;
+    --yt-sys-color-brand-red:         var(--fg) !important;
+    --yt-spec-mono-filled-cta:        var(--fg) !important;
+    --yt-spec-call-to-action-inverse: #000 !important;
+
+    --yt-spec-themed-blue:            var(--fg) !important;
+    --yt-spec-general-background-a:   #000 !important;
+    --yt-spec-general-background-b:   #000 !important;
+    --yt-spec-general-background-c:   #000 !important;
+    --yt-spec-base-background:        #000 !important;
+    --yt-spec-raised-background:      #000 !important;
+    --yt-spec-menu-background:        #000 !important;
+    --yt-spec-brand-background-solid: #000 !important;
+
+    /* Overlay-переменные для бейджа длительности */
+    --yt-spec-static-overlay-background-medium:       rgba(0,0,0,0.85) !important;
+    --yt-spec-static-overlay-background-medium-light: rgba(0,0,0,0.85) !important;
+    --yt-spec-static-overlay-background-heavy:        rgba(0,0,0,0.85) !important;
+    --yt-spec-static-overlay-text-primary:            #ffffff !important;
+    --yt-spec-static-overlay-text-secondary:          #ffffff !important;
+    --yt-spec-badge-chip-background:                  rgba(0,0,0,0.85) !important;
+}
+
+/* ============================================================
+   6. ПОИСК
+   ============================================================ */
+ytd-searchbox,
+#search-form,
+#container.ytd-searchbox,
+#search-input input {
+    background: #000 !important;
+    color: var(--fg) !important;
+    border: var(--line) !important;
+    border-radius: 0 !important;
+    caret-color: var(--fg);
+}
+#search-input input:focus,
+ytd-searchbox[has-focus] #container {
+    border-color: var(--fg) !important;
+}
+#search-icon-legacy,
+ytd-searchbox #search-icon-legacy {
+    background: #000 !important;
+    border: var(--line) !important;
+    border-left: none !important;
+    border-radius: 0 !important;
+}
+#search-icon-legacy svg {
+    fill: var(--fg) !important;
+}
+#search-input input::placeholder { color: var(--fg-dim) !important; }
+
+/* ============================================================
+   7. ЧИП-БАР
+   ============================================================ */
+ytd-feed-filter-chip-bar-renderer,
+ytd-feed-filter-chip-bar-renderer #chips-wrapper,
+ytd-feed-filter-chip-bar-renderer #scroll-container,
+ytd-feed-filter-chip-bar-renderer #chips,
+ytd-feed-filter-chip-bar-renderer #chip-bar,
+ytd-feed-filter-chip-bar-renderer iron-selector#chips,
+ytd-feed-filter-chip-bar-renderer #right-arrow,
+ytd-feed-filter-chip-bar-renderer #left-arrow,
+yt-chip-cloud-renderer,
+#chip-bar-container,
+#chips-wrapper,
+#scroll-container {
+    background: transparent !important;
+    border: none !important;
+}
+ytd-feed-filter-chip-bar-renderer::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background: var(--fg-dim);
+}
+
+yt-chip-cloud-chip-renderer,
+.ytChipShapeChip,
+paper-button {
+    background: rgba(0, 0, 0, 0.65) !important;
+    color: var(--fg) !important;
+    border: 1px solid var(--fg-dim) !important;
+    border-radius: 0 !important;
+}
+yt-chip-cloud-chip-renderer:hover,
+.ytChipShapeChip:hover {
+    border-color: var(--fg) !important;
+    color: var(--fg-bright) !important;
+}
+yt-chip-cloud-chip-renderer[selected],
+.ytChipShapeActive {
+    background: var(--fg) !important;
+    color: #000 !important;
+    border-color: var(--fg) !important;
+}
+yt-chip-cloud-chip-renderer[selected] *,
+.ytChipShapeActive * {
+    color: #000 !important;
+    fill: #000 !important;
+}
+
+/* ============================================================
+   8. САЙДБАР
+   ============================================================ */
+#guide-wrapper,
+#guide-content,
+ytd-guide-renderer,
+ytd-app-drawer,
+tp-yt-app-drawer #contentContainer,
+ytd-mini-guide-renderer {
+    background: #000 !important;
+    border-right: var(--line) !important;
+}
+ytd-guide-entry-renderer,
+ytd-mini-guide-entry-renderer {
+    border-radius: 0 !important;
+}
+ytd-guide-entry-renderer:hover,
+ytd-mini-guide-entry-renderer:hover,
+ytd-guide-entry-renderer[active] {
+    background: var(--fg) !important;
+}
+ytd-guide-entry-renderer:hover *,
+ytd-mini-guide-entry-renderer:hover *,
+ytd-guide-entry-renderer[active] * {
+    color: #000 !important;
+    fill: #000 !important;
+}
+
+/* ============================================================
+   9. КАРТОЧКИ ВИДЕО
+   ============================================================ */
+ytd-rich-item-renderer,
+ytd-video-renderer,
+ytd-grid-video-renderer,
+ytd-compact-video-renderer,
+ytd-rich-grid-media {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+}
+ytd-rich-item-renderer:hover,
+ytd-video-renderer:hover,
+ytd-compact-video-renderer:hover {
+    outline: 1px solid var(--fg) !important;
+    outline-offset: -1px;
+}
+
+ytd-thumbnail,
+ytd-thumbnail img,
+#thumbnail,
+#thumbnail img {
+    border: none !important;
+    border-radius: 0 !important;
+}
+ytd-thumbnail img {
+    outline: 1px solid var(--fg-dim);
+    outline-offset: -1px;
+}
+ytd-thumbnail:hover img {
+    outline-color: var(--fg);
+    filter: none;
+}
+
+ytd-thumbnail-overlay-resume-playback-renderer,
+#progress.ytd-thumbnail-overlay-resume-playback-renderer,
+.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment {
+    background: var(--fg) !important;
+}
+
+/* Заголовок видео */
+#video-title,
+yt-formatted-string#video-title,
+.yt-lockup-metadata-view-model-wiz__title,
+.yt-lockup-metadata-view-model-wiz__title span,
+a#video-title-link {
+    color: var(--fg) !important;
+}
+#video-title:hover,
+a#video-title-link:hover {
+    color: var(--fg-bright) !important;
+    text-decoration: underline;
+}
+
+/* МЕТА: исполнитель / канал / просмотры */
+ytd-video-meta-block,
+#metadata-line,
+#metadata-line span,
+.yt-content-metadata-view-model-wiz__metadata-text,
+.yt-content-metadata-view-model-wiz__metadata-row,
+.yt-content-metadata-view-model-wiz__metadata-text span,
+ytd-video-meta-block #text,
+ytd-video-meta-block .ytd-video-meta-block,
+ytd-channel-name,
+ytd-channel-name a,
+#channel-name,
+#channel-name a,
+.ytd-video-meta-block,
+.yt-lockup-metadata-view-model-wiz__metadata,
+.yt-lockup-metadata-view-model-wiz__metadata span {
+    color: var(--fg-meta) !important;
+    opacity: 1 !important;
+}
+
+ytd-channel-name a:hover,
+#channel-name a:hover {
+    color: var(--fg-bright) !important;
+}
+
+/* ============================================================
+   10. ПЛЕЕР
+   ============================================================ */
+#movie_player,
+.html5-video-player,
+#player-container {
+    background: #000 !important;
+}
+
+.ytp-play-progress,
+.ytp-swatch-background-color,
+.ytp-scrubber-button,
+.ytp-volume-slider-handle {
+    background: var(--fg) !important;
+    border-radius: 0 !important;
+}
+.ytp-load-progress {
+    background: var(--fg-dim) !important;
+    border-radius: 0 !important;
+}
+.ytp-scrubber-button {
+    transform: none;
+}
+.ytp-button:hover svg,
+.ytp-button:hover .ytp-svg-fill {
+    fill: var(--fg) !important;
+}
+.ytp-chrome-bottom {
+    background: #000 !important;
+}
+.ytp-volume-slider-track,
+.ytp-volume-slider-handle::before {
+    border-radius: 0 !important;
+}
+.ytp-tooltip-bg {
+    border: 1px solid var(--fg) !important;
+    border-radius: 0 !important;
+}
+
+.ytp-live-badge,
+.ytp-live .ytp-swatch-background-color,
+.yt-badge-live,
+.ytp-chrome-controls .ytp-live-badge,
+ytd-badge-supported-renderer[is-live] {
+    background: var(--fg) !important;
+    color: #000 !important;
+}
+
+ytd-ad-slot-renderer .badge,
+.ytp-ad-badge,
+.ad-badge {
+    background: var(--fg) !important;
+    color: #000 !important;
+}
+.ytp-ad-module,
+ytd-ad-slot-renderer,
+ytd-in-feed-ad-layout-renderer,
+#player-ads {
+    background: #000 !important;
+}
+
+/* ============================================================
+   11. СКРОЛЛБАР
+   ============================================================ */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track {
+    background: #000;
+    border-left: 1px solid var(--fg-dim);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--fg-dim) !important;
+    border-radius: 0 !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--fg) !important;
+}
+
+/* ============================================================
+   12. КНОПКИ
+   ============================================================ */
+ytd-subscribe-button-renderer button,
+yt-button-shape button,
+#subscribe-button button {
+    background: #000 !important;
+    color: var(--fg) !important;
+    border: 1px solid var(--fg) !important;
+    border-radius: 0 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+ytd-subscribe-button-renderer button:hover,
+yt-button-shape button:hover {
+    background: var(--fg) !important;
+    color: #000 !important;
+}
+ytd-subscribe-button-renderer button:hover *,
+yt-button-shape button:hover * {
+    color: #000 !important;
+    fill: #000 !important;
+}
+
+ytd-toggle-button-renderer #button,
+ytd-menu-renderer button {
+    border-radius: 0 !important;
+}
+ytd-toggle-button-renderer #button:hover svg,
+ytd-menu-renderer button:hover svg {
+    fill: var(--fg) !important;
+}
+
+/* ============================================================
+   13. ПАНЕЛИ / МЕНЮ / ДИАЛОГИ
+   ============================================================ */
+tp-yt-paper-dialog,
+ytd-popup-container,
+tp-yt-iron-dropdown,
+ytd-multi-page-menu-renderer,
+#contentWrapper.ytd-multi-page-menu-renderer,
+ytd-menu-popup-renderer,
+tp-yt-paper-listbox,
+ytd-account-settings,
+tp-yt-paper-dialog-scrollable,
+ytd-compact-link-renderer,
+tp-yt-paper-item,
+ytd-menu-service-item-renderer,
+ytd-menu-navigation-item-renderer,
+ytd-menu-service-item-renderer tp-yt-paper-item,
+ytd-miniplayer,
+ytd-miniplayer #card,
+ytd-search-suggestion-renderer,
+ytd-suggestion-renderer {
+    background: #000 !important;
+    backdrop-filter: none !important;
+    border: var(--line) !important;
+    border-radius: 0 !important;
+    color: var(--fg) !important;
+}
+
+tp-yt-paper-dialog #content,
+tp-yt-paper-dialog #scrollable,
+ytd-multi-page-menu-renderer #container,
+ytd-multi-page-menu-renderer #menu,
+ytd-multi-page-menu-renderer ytd-simple-menu-header-renderer,
+ytd-simple-menu-header-renderer {
+    background: #000 !important;
+}
+
+tp-yt-paper-item,
+ytd-menu-service-item-renderer {
+    border-radius: 0 !important;
+}
+tp-yt-paper-item:hover,
+ytd-menu-service-item-renderer:hover {
+    background: var(--fg) !important;
+}
+tp-yt-paper-item:hover *,
+ytd-menu-service-item-renderer:hover * {
+    color: #000 !important;
+    fill: #000 !important;
+}
+
+/* ============================================================
+   14. КОММЕНТАРИИ
+   ============================================================ */
+#comments,
+ytd-comments,
+ytd-comment-thread-renderer {
+    background: transparent !important;
+}
+#comments {
+    border-top: var(--line) !important;
+}
+#author-text { color: var(--fg) !important; }
+#author-text:hover {
+    color: var(--fg-bright) !important;
+    text-decoration: underline;
+}
+yt-formatted-string#content-text { color: var(--fg) !important; }
+
+yt-img-shadow img,
+#author-thumbnail img,
+.yt-spec-avatar-shape,
+.yt-spec-avatar-shape__image {
+    border: none !important;
+    border-radius: 0 !important;
+    outline: 1px solid var(--fg-dim);
+    outline-offset: -1px;
+}
+
+/* ============================================================
+   15. ССЫЛКИ
+   ============================================================ */
+a, a:visited { color: var(--fg) !important; }
+a:hover {
+    color: var(--fg-bright) !important;
+    text-decoration: underline;
+}
+
+/* ============================================================
+   16. SKELETON
+   ============================================================ */
+.skeleton-bg-color,
+.skeleton-light-border-bottom {
+    background: #000 !important;
+    border-color: var(--fg-dim) !important;
+    border-radius: 0 !important;
+}
+
+/* ============================================================
+   17. ПЛЕЙЛИСТ СПРАВА
+   ============================================================ */
+ytd-playlist-panel-renderer,
+#playlist,
+#items.ytd-playlist-panel-renderer,
+ytd-playlist-panel-renderer #container,
+ytd-playlist-panel-renderer #playlist-items,
+ytd-playlist-panel-renderer #header,
+ytd-playlist-panel-video-renderer,
+ytd-playlist-panel-renderer .playlist-items,
+ytd-playlist-panel-renderer .container,
+#playlist-items.ytd-playlist-panel-renderer {
+    background: #000 !important;
+    border-left: var(--line) !important;
+    border-radius: 0 !important;
+}
+ytd-playlist-panel-video-renderer:hover,
+ytd-playlist-panel-video-renderer[selected] {
+    background: var(--fg) !important;
+}
+ytd-playlist-panel-video-renderer:hover *,
+ytd-playlist-panel-video-renderer[selected] * {
+    color: #000 !important;
+    fill: #000 !important;
+}
+
+ytd-playlist-panel-video-renderer #byline,
+ytd-playlist-panel-video-renderer #byline *,
+ytd-playlist-panel-video-renderer .byline,
+.yt-lockup-metadata-view-model-wiz__metadata {
+    color: var(--fg-meta) !important;
+}
+
+/* ============================================================
+   18. SHORTS
+   ============================================================ */
+ytd-shorts,
+ytd-reel-video-renderer,
+#shorts-container {
+    background: #000 !important;
+}
+ytd-shorts-lockup-view-model,
+ytd-shorts-lockup-view-model-v2 {
+    border: 1px solid var(--fg-dim) !important;
+    border-radius: 0 !important;
+}
+ytd-shorts-lockup-view-model:hover {
+    border-color: var(--fg) !important;
+}
+.reel-video-in-sequence-new,
+.reel-video-in-sequence {
+    border-radius: 0 !important;
+}
+
+/* ============================================================
+   19. LIVE CHAT
+   ============================================================ */
+yt-live-chat-renderer,
+yt-live-chat-header-renderer {
+    background: #000 !important;
+    color: var(--fg) !important;
+}
+yt-live-chat-text-message-renderer #author-name[is-owner],
+yt-live-chat-text-message-renderer #author-name[is-moderator] {
+    color: var(--fg-bright) !important;
+}
+
+/* ============================================================
+   20. МЕЛОЧИ
+   ============================================================ */
+ytd-menu-renderer .yt-icon-button:hover {
+    color: var(--fg) !important;
+}
+
+#notification-count,
+ytd-notification-topbar-button-renderer #notification-count {
+    background: var(--fg) !important;
+    color: #000 !important;
+    border-radius: 0 !important;
+    font-weight: 700;
+}
+ytd-notification-topbar-button-renderer[has-unread] svg {
+    fill: var(--fg) !important;
+}
+
+tp-yt-paper-tab[aria-selected="true"],
+.yt-tab-shape-wiz--host-clickable[aria-selected="true"] {
+    color: var(--fg-bright) !important;
+    border-bottom: 2px solid var(--fg) !important;
+}
+
+ytd-badge-supported-renderer[aria-label*="Premium"],
+.ytd-badge-supported-renderer .badge-shape-wiz__badge {
+    background: var(--fg) !important;
+    color: #000 !important;
+}
+
+/* ============================================================
+   21. ЗАЩИТА ОТ СКРУГЛЕНИЙ
+   ============================================================ */
+[class*="rounded"],
+[class*="pill"],
+[style*="border-radius"] {
+    border-radius: 0 !important;
+}
+
+/* ============================================================
+   22. БЕЙДЖ ДЛИТЕЛЬНОСТИ ВИДЕО — ФИКС v4 (без дублирования)
+   ------------------------------------------------------------
+   Причина дублирования:
+     YouTube рендерит старое ytd-thumbnail-overlay-time-status-
+     renderer параллельно с новым badge-shape → .yt-badge-shape__text.
+     Одно из них скрыто через visibility/opacity, и `!important`
+     на visibility:visible / opacity:1 (как было в v3) раскрывал
+     оба бейджа.
+
+   Что делаем:
+     1) НЕ форсим visibility/opacity/display — пусть YouTube решает.
+     2) Точечно ставим чёрную подложку на контейнеры.
+     3) Текст бейджа — белый, фон прозрачный.
+     4) Убиваем возможные ::before/::after у старого рендерера,
+        которые могли выводить дублирующий текст.
+   ============================================================ */
+
+/* --- 22.1. Убиваем возможные псевдо-элементы старого бейджа --- */
+ytd-thumbnail-overlay-time-status-renderer::before,
+ytd-thumbnail-overlay-time-status-renderer::after,
+yt-thumbnail-overlay-time-status-view-model::before,
+yt-thumbnail-overlay-time-status-view-model::after {
+    content: none !important;
+    display: none !important;
+    background: none !important;
+}
+
+/* --- 22.2. Контейнеры бейджа: чёрная подложка, белый текст.
+       ВАЖНО: без visibility/opacity/display, чтобы не раскрыть
+       скрытый дубликат. --- */
+ytd-thumbnail-overlay-time-status-renderer,
+yt-thumbnail-overlay-time-status-view-model,
+yt-thumbnail-overlay-badge-view-model,
+.ytThumbnailOverlayBadgeViewModelHost,
+badge-shape.yt-badge-shape,
+yt-badge-shape.yt-badge-shape {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    z-index: 10 !important;
+    border: none !important;
+    outline: none !important;
+}
+
+/* --- 22.3. Внутренний badge-shape (когда обёрнут во view-model). --- */
+:is(
+  yt-thumbnail-overlay-badge-view-model,
+  .ytThumbnailOverlayBadgeViewModelHost,
+  yt-thumbnail-overlay-time-status-view-model
+) :is(
+  badge-shape.yt-badge-shape,
+  yt-badge-shape.yt-badge-shape,
+  .yt-badge-shape
+) {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* --- 22.4. Текст бейджа: белый на прозрачном. --- */
+:is(
+  ytd-thumbnail-overlay-time-status-renderer,
+  yt-thumbnail-overlay-time-status-view-model,
+  yt-thumbnail-overlay-badge-view-model,
+  .ytThumbnailOverlayBadgeViewModelHost,
+  badge-shape.yt-badge-shape,
+  yt-badge-shape.yt-badge-shape
+) :is(
+  #text,
+  .yt-badge-shape__text,
+  .badge-shape-wiz__text,
+  yt-formatted-string
+) {
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* --- 22.5. Явно скрываем невидимые/устаревшие дубликаты.
+       Если у бейджа стоит aria-hidden="true", значит он для скрин-
+       ридера и не должен быть виден. Но НЕ форсим display:none,
+       чтобы не убить живой бейдж — только страхуемся от visibility. --- */
+ytd-thumbnail-overlay-time-status-renderer[aria-hidden="true"],
+yt-thumbnail-overlay-time-status-view-model[aria-hidden="true"] {
+    pointer-events: none !important;
+}
+
+/* ============================================== КОНЕЦ ======== */
